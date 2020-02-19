@@ -1,0 +1,6 @@
+## project-specific
+build/*
+
+## Other files:
+*.zip
+*.pdf
