@@ -37,12 +37,13 @@ makeindexopts = "-q"
 
 -- Build example.tex using pdflatex (one run)
 local function type_example()
-  errorlevel = run(unpackdir, "pdflatex --interaction=batchmode example.tex >"..os_null)
+  local file = jobname(unpackdir.."/example.tex")
+  errorlevel = run(unpackdir, "pdflatex --interaction=batchmode "..file..".tex > "..os_null)
   if errorlevel ~= 0 then
-    error("** Error!!: pdflatex --interaction=batchmode example.tex")
+    error("** Error!!: pdflatex --interaction=batchmode "..file..".tex")
     return errorlevel
   else
-    print("** Running: pdflatex --interaction=batchmode example.tex")
+    print("** Running: pdflatex --interaction=batchmode "..file..".tex")
   end
   return 0
 end

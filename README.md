@@ -29,6 +29,7 @@ For the purposes of this example we will use and adapted version the now _classi
 
   * [1.1 Development structure](#heading--1-1)
   * [1.2 Installation structure](#heading--1-2)
+  * [1.3 Command line interface \(CLI\)](#heading--1-3)
 
 
 **[2. Setting up the file build.lua](#heading--2)**
@@ -60,13 +61,10 @@ For the purposes of this example we will use and adapted version the now _classi
     * [4.1.1 Configuring typeset\(file\) function](#heading--4-1-1)
     * [4.1.2 Separate compilations by file in typeset\(file\)](#heading--4-1-2)
   * [4.2 Compiling documentation using latex>dvips>ps2pdf](#heading--4-2)
-  * [4.3 Using other tools to compile](#heading--4-3)
-    * [4.3.1 Using latexmk to compile documentation](#heading--4-3-1)
-
-**[5. Command line interface (CLI) for l3build](#heading--5)**
+  * [4.3 Using latexmk to compile documentation](#heading--4-3)
+  * [4.4 Using arara to compile documentation](#heading--4-4)
 
 ---
-
 
 <a name="heading--1"/>
 
@@ -113,6 +111,42 @@ TDS:doc/latex/demopkg/README.md
 TDS:source/latex/demopkg/demopkg.dtx
 TDS:source/latex/demopkg/demopkg.ins
 ```
+
+<a name="heading--1-3"/>
+
+# 1.3 Command line interface \(CLI\)
+
+The use of `l3build` from the command line is:
+
+```
+l3build <target> [<options>]
+```
+
+Some of the default targets:
+
+```bash
+l3build unpack
+l3build install
+l3build install --full --dry-run
+l3build install --full
+l3build uninstall
+l3build doc
+l3build tag
+l3build tag v1.2
+l3build tag v1.2a-beta
+l3build ctan
+l3build upload --debug
+l3build upload
+l3build clean
+```
+
+Some of the customised `targets`:
+
+```bash
+l3build testpkg
+l3build tagged
+```
+
 
 <a name="heading--2"/>
 
@@ -224,12 +258,13 @@ we will compile our example.
 
 ```lua
 local function type_example()
-  errorlevel = run(unpackdir, "pdflatex --interaction=batchmode example.tex >"..os_null)
+  local file = jobname(unpackdir.."/example.tex")
+  errorlevel = run(unpackdir, "pdflatex --interaction=batchmode "..file..".tex > "..os_null)
   if errorlevel ~= 0 then
-    error("** Error!!: pdflatex --interaction=batchmode example.tex")
+    error("** Error!!: pdflatex --interaction=batchmode "..file..".tex")
     return errorlevel
   else
-    print("** Running: pdflatex --interaction=batchmode example.tex")
+    print("** Running: pdflatex --interaction=batchmode "..file..".tex")
   end
   return 0
 end
@@ -781,7 +816,7 @@ If you have more files in `typesetfiles` you should add
 
 ```lua
 if file == "filename" then
--- code for compilation
+  -- code for compilation
 return 0
 end
 ```
@@ -887,14 +922,10 @@ end
 
 <a name="heading--4-3"/>
 
-## 4.3 Using other tools to compile
+## 4.3 Using latexmk to compile
 
 You can use other tools to compile your files such as [arara](https://ctan.org/pkg/arara)
 (I love arara) or [latexmk](https://www.ctan.org/pkg/latexmk).
-
-<a name="heading--4-3-1"/>
-
-### 4.3.1 Using latexmk to compile
 
 When using `latexmk` it is usual that we have our own configurations in the `latexmkrc`
 file which we will not distribute. The `latexmkrc` file will be:
@@ -951,37 +982,48 @@ function typeset(file)
 end
 ```
 
-<a name="heading--5"/>
+<a name="heading--4-4"/>
 
-# 5. Command line interface (CLI)
+## 4.4 Using arara to compile documentation
 
-The use of `l3build` from the command line is:
+In order to use `arara` to compile the documentation for our package, we
+need to add the _rules_ to the start of `demopkg.dtx`:
 
-```
-l3build <target> [<options>]
-```
-
-Some of the default targets:
-
-```bash
-l3build unpack
-l3build install
-l3build install --full --dry-run
-l3build install --full
-l3build uninstall
-l3build doc
-l3build tag
-l3build tag v1.2
-l3build tag v1.2a-beta
-l3build ctan
-l3build upload --debug
-l3build upload
-l3build clean
+```tex
+% \iffalse meta-comment
+% arara: latex: { interaction: batchmode, draft: yes }
+% arara: makeindex: { style: gind.ist, input: idx, output: ind }
+% arara: makeindex: { style: gglo.ist, input: glo, output: gls }
+% arara: latex: { interaction: batchmode, draft: yes }
+% arara: latex: { interaction: batchmode }
+% arara: dvips: { options: ["-P", "pdf"] }
+% arara: ps2pdf: { options: ["-dPDFSETTINGS=/screen"] }
 ```
 
-Some of the customised `targets`:
+And then add the following lines to `build.lua`:
 
-```bash
-l3build testpkg
-l3build tagged
+```lua
+function docinit_hook()
+  errorlevel = cp("*.sty", sourcefiledir, typesetdir)
+  if errorlevel ~= 0 then
+    error("** Error!!: Can't copy .sty from "..unpackdir.." to "..typesetdir)
+    return errorlevel
+  else
+    print("** Copying .sty from "..unpackdir.." to "..typesetdir)
+  end
+  return 0
+end
+
+function typeset(file)
+  if file == "example.tex" then return 0 end
+  local file = jobname("sources/demopkg.dtx")
+  errorlevel = run(typesetdir,"arara "..file..".dtx >"..os_null)
+    if errorlevel ~= 0 then
+      error("** Error!!: arara "..file..".dtx")
+      return errorlevel
+    else
+      print("** Running: arara "..file..".dtx")
+  end
+  return 0
+end
 ```
