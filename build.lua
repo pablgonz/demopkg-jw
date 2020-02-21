@@ -12,11 +12,10 @@ maindir       = "."
 sourcefiledir = "./sources"
 textfiledir   = "./sources"
 textfiles     = {textfiledir.."/CTANREADME.md"}
-sourcefiles   = {"demopkg.dtx", "demopkg.ins"}
+sourcefiles   = {"demopkg.dtx"}
 installfiles  = {"demopkg.pdf", "demopkg.sty", "example.tex", "example.pdf"}
 tdslocations  = {
   "source/latex/demopkg/demopkg.dtx",
-  "source/latex/demopkg/demopkg.ins",
   "doc/latex/demopkg/example/example.tex",
   "doc/latex/demopkg/example/example.pdf",
   "doc/latex/demopkg/demopkg.pdf",
@@ -24,7 +23,7 @@ tdslocations  = {
 }
 
 -- Unpacking files from .dtx file
-unpackfiles = {"demopkg.ins"}
+unpackfiles = {"demopkg.dtx"}
 unpackopts  = "--interaction=batchmode"
 unpackexe   = "luatex"
 
@@ -182,19 +181,19 @@ if options["target"] == "testpkg" then
     print("** Copying files from "..sourcefiledir.." to /"..tempdir)
   end
   -- Unpack files
-  local file = jobname(tempdir.."/demopkg.ins")
-  errorlevel = run(tempdir, "pdftex -interaction=batchmode "..file..".ins > "..os_null)
+  local file = jobname(tempdir.."/demopkg.dtx")
+  errorlevel = run(tempdir, "pdftex -interaction=batchmode "..file..".dtx > "..os_null)
   if errorlevel ~= 0 then
-    error("** Error!!: pdftex -interaction=batchmode "..file..".ins")
+    error("** Error!!: pdftex -interaction=batchmode "..file..".dtx")
     return errorlevel
   else
-    print("** Running: pdftex -interaction=batchmode "..file..".ins")
+    print("** Running: pdftex -interaction=batchmode "..file..".dtx")
   end
   -- pdflatex
   local file = jobname(tempdir.."/example.tex")
   errorlevel = run(tempdir, "pdflatex -interaction=nonstopmode "..file.." > "..os_null)
   if errorlevel ~= 0 then
-    error("** Error!!: pdflatex -interaction=nonstopmode "..file".tex")
+    error("** Error!!: pdflatex -interaction=nonstopmode "..file..".tex")
     return errorlevel
   else
     print("** Running: pdflatex -interaction=nonstopmode "..file..".tex")

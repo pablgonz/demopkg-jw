@@ -77,7 +77,8 @@ expect them to be located.
 
 ## 1.1 Development structure
 
-We will create the directory structure for our project. It should look like this:
+We will create the directory structure for our project. It should look
+like this:
 
 ```
 demopkg-jw/
@@ -87,13 +88,12 @@ demopkg-jw/
 ├── mypersonaldata.lua
 ├── README.md
 └── sources
-   ├── CTANREADME.md
-   ├── demopkg.dtx
-   └── demopkg.ins
+    ├── CTANREADME.md
+    └── demopkg.dtx
 ```
 
-The `demopkg.dtx` file includes `example.tex` which is extracted by using
-`luatex demopkg.ins`, which is not explicitly listed.
+The `demopkg.dtx` file includes `demopkg.sty` and `example.tex` which
+is extracted by using `luatex demopkg.dtx`.
 
 <a name="heading--1-2"/>
 
@@ -103,13 +103,12 @@ For the installation structure you should try to follow the [TDS](https://ctan.o
 model. The installation we expect in our TDS tree (`TEXMFHOME`) will be like this:
 
 ```
-TDS:tex/latex/demopkg/demopkg.sty
 TDS:doc/latex/demopkg/demopkg.pdf
 TDS:doc/latex/demopkg/example/example.pdf
 TDS:doc/latex/demopkg/example/example.tex
 TDS:doc/latex/demopkg/README.md
+TDS:tex/latex/demopkg/demopkg.sty
 TDS:source/latex/demopkg/demopkg.dtx
-TDS:source/latex/demopkg/demopkg.ins
 ```
 
 <a name="heading--1-3"/>
@@ -126,8 +125,9 @@ Some of the default targets:
 
 ```bash
 l3build unpack
+l3build unpack -q
 l3build install
-l3build install --full --dry-run
+l3build install --full --dry-run -q
 l3build install --full
 l3build uninstall
 l3build doc
@@ -140,13 +140,12 @@ l3build upload
 l3build clean
 ```
 
-Some of the customised `targets`:
+Some of the _customised_ `targets`:
 
 ```bash
 l3build testpkg
 l3build tagged
 ```
-
 
 <a name="heading--2"/>
 
@@ -179,12 +178,11 @@ structure of our package.
 maindir       = "."
 sourcefiledir = "./sources"
 textfiledir   = "./sources"
-textfiles     = {"sources/CTANREADME.md"}
-sourcefiles   = {"demopkg.dtx", "demopkg.ins"}
+textfiles     = {textfiledir.."/CTANREADME.md"}
+sourcefiles   = {"demopkg.dtx"}
 installfiles  = {"demopkg.pdf", "demopkg.sty", "example.tex", "example.pdf"}
 tdslocations  = {
   "source/latex/demopkg/demopkg.dtx",
-  "source/latex/demopkg/demopkg.ins",
   "doc/latex/demopkg/example/example.tex",
   "doc/latex/demopkg/example/example.pdf",
   "doc/latex/demopkg/demopkg.pdf",
@@ -199,18 +197,17 @@ tdslocations  = {
 Now we set the variables to unpack the files in our package.
 
 ```lua
-unpackfiles = {"demopkg.ins"}
+unpackfiles = {"demopkg.dtx"}
 unpackopts  = "--interaction=batchmode"
 unpackexe   = "luatex"
 ```
 
-When you run `l3build unpack` and check the `build/unpacked/` directory
+When you run `l3build unpack -q` and check the `build/unpacked/` directory
 you should see this:
 
 ```
 build/unpacked/
 ├── demopkg.dtx
-├── demopkg.ins
 ├── demopkg.log
 ├── demopkg.sty
 └── example.tex
@@ -273,12 +270,11 @@ specialtypesetting = { }
 specialtypesetting["example.tex"]= {func = type_example}
 ```
 
-When you run `l3build install --full --dry-run` you should see this:
+When you run `l3build install --full --dry-run -q` you should see this:
 
 ```
 For installation inside /home/yourname/texmf:
 - source/latex/demopkg/demopkg.dtx
-- source/latex/demopkg/demopkg.ins
 - doc/latex/demopkg/demopkg.pdf
 - doc/latex/demopkg/example/example.pdf
 - doc/latex/demopkg/CTANREADME.md
@@ -420,7 +416,7 @@ be sent to [CTAN](https://ctan.org/) when our package is uploaded. In this
 example, the `ctan.ann` file will look like this:
 
 ```
-* Fixed some bugs in previus version
+- Fixed some bugs in previus version
 ```
 
 And the `ctan.note` file will look like this:
@@ -481,7 +477,7 @@ cleanfiles = {
 ---
 
 > At this point we have finished configuring our package for development
-> using `l3build`, but ... you can always do a "little" more.
+> using `l3build`, but ... you can always do a **"little"** more.
 
 ---
 
@@ -603,19 +599,19 @@ if options["target"] == "testpkg" then
     print("** Copying files from "..sourcefiledir.." to /"..tempdir)
   end
   -- Unpack files
-  local file = jobname(tempdir.."/demopkg.ins")
-  errorlevel = run(tempdir, "pdftex -interaction=batchmode "..file..".ins > "..os_null)
+  local file = jobname(tempdir.."/demopkg.dtx")
+  errorlevel = run(tempdir, "pdftex -interaction=batchmode "..file..".dtx > "..os_null)
   if errorlevel ~= 0 then
-    error("** Error!!: pdftex -interaction=batchmode "..file..".ins")
+    error("** Error!!: pdftex -interaction=batchmode "..file..".dtx")
     return errorlevel
   else
-    print("** Running: pdftex -interaction=batchmode "..file..".ins")
+    print("** Running: pdftex -interaction=batchmode "..file..".dtx")
   end
   -- pdflatex
   local file = jobname(tempdir.."/example.tex")
   errorlevel = run(tempdir, "pdflatex -interaction=nonstopmode "..file.." > "..os_null)
   if errorlevel ~= 0 then
-    error("** Error!!: pdflatex -interaction=nonstopmode "..file".tex")
+    error("** Error!!: pdflatex -interaction=nonstopmode "..file..".tex")
     return errorlevel
   else
     print("** Running: pdflatex -interaction=nonstopmode "..file..".tex")
@@ -753,7 +749,7 @@ Let's remember that in our example `typesetfiles = {...}` contains `demopkg.dtx`
 and `example.tex`,  the configuration for `typeset(file)` would be:
 
 ```lua
-function typeset (file)
+function typeset(file)
   -- example
   if file == "example.tex" then
   local file = jobname(unpackdir.."/example.tex")
