@@ -1062,7 +1062,7 @@ local function os_capture(cmd, raw)
 end
 ```
 
-<a name="heading--5-1"/>
+<a name="heading--5-2"/>
 
 ## 5.2 Creating the run\_git\(s\) function
 
