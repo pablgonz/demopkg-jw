@@ -72,14 +72,14 @@ function update_tag(file, content, tagname, tagdate)
   end
 
   if string.match(file, "demopkg.dtx") then
-    tagdate = string.gsub(tagdate, "-", "/")
+    local tagdate = string.gsub(tagdate, "-", "/")
     content = string.gsub(content,
                           "%[%d%d%d%d%/%d%d%/%d%d%s+v%S+",
                           "["..tagdate.." v"..tagname)
   end
 
   if string.match(file, "CTANREADME.md") then
-    tagdate = string.gsub(tagdate, "/", "-")
+    local tagdate = string.gsub(tagdate, "/", "-")
     content = string.gsub(content,
                           "Version: (%d+)(%S+)",
                           "Version: "..tagname)

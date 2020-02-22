@@ -12,7 +12,7 @@ and [luaotfload](https://github.com/latex3/luaotfload) among others.
 One of the advantages of `l3build` is its portability between operating
 systems and the amount of _pre-defined_ functions to generate documentation
 and regression testing. This tool is also very useful for package developers
-or users who want to share and automate your LaTeX projects using Github for example.
+or users who want to share and automate your LaTeX projects using GitHub for example.
 
 After reading the documentation and reviewing the [_"illustrative examples"_](https://github.com/latex3/l3build/tree/master/examples)
 I have managed to make `l3build` work with a LaTeX2e package (without using regression testing).
@@ -63,6 +63,12 @@ For the purposes of this example we will use and adapted version the now _classi
   * [4.2 Compiling documentation using latex>dvips>ps2pdf](#heading--4-2)
   * [4.3 Using latexmk to compile documentation](#heading--4-3)
   * [4.4 Using arara to compile documentation](#heading--4-4)
+
+**[5. Setting up Releases and GitHub](#heading--5)**
+  * [5.1 Creating the os\_capture\(cmd, raw\) function](#heading--5-1)
+  * [5.2 Creating the run\_git\(s\) function](#heading--5-2)
+  * [5.3 Recording git command output](#heading--5-3)
+  * [5.4 Adding the "release" target to l3build CLI](#heading--5-4)
 
 ---
 
@@ -334,14 +340,14 @@ function update_tag(file, content, tagname, tagdate)
   end
 
   if string.match(file, "demopkg.dtx") then
-    tagdate = string.gsub(tagdate, "-", "/")
+    local tagdate = string.gsub(tagdate, "-", "/")
     content = string.gsub(content,
                           "%[%d%d%d%d%/%d%d%/%d%d%s+v%S+",
                           "["..tagdate.." v"..tagname)
   end
 
   if string.match(file, "CTANREADME.md") then
-    tagdate = string.gsub(tagdate, "/", "-")
+    local tagdate = string.gsub(tagdate, "/", "-")
     content = string.gsub(content,
                           "Version: (%d+)(%S+)",
                           "Version: "..tagname)
@@ -1022,4 +1028,130 @@ function typeset(file)
   end
   return 0
 end
+```
+
+<a name="heading--5"/>
+
+# 5. Setting up Releases and GitHub
+
+Nowadays it is very common that we store our projects in GitHub \(or other similar ones\),
+the versatility of `l3build` allows us to automate some tasks. The following
+lines are adapted to be able to do a (almost) automatic **Release** by registering it in GitHub.
+
+\(Credits and thanks to Will Robertson for placing the [fontspec](https://github.com/wspr/fontspec)
+code from which I adapted this.)
+
+<a name="heading--5-1"/>
+
+## 5.1 Creating the os\_capture\(cmd, raw\) function
+
+First we create a function to capture the outputs of the _calls to system_
+and do our checks:
+
+```lua
+local function os_capture(cmd, raw)
+  local f = assert(io.popen(cmd, 'r'))
+  local s = assert(f:read('*a'))
+  f:close()
+  if raw then return s end
+    s = string.gsub(s, '^%s+', '')
+    s = string.gsub(s, '%s+$', '')
+    s = string.gsub(s, '[\n\r]+', ' ')
+  return s
+end
+```
+
+<a name="heading--5-1"/>
+
+## 5.2 Creating the run\_git\(s\) function
+
+We create a _dedicated_ function to execute `git tag`:
+
+```lua
+local function run_git(s)
+  print('** Running: '..s..'\n')
+  local git_tag = os.execute(s)
+  if git_tag > 0 then
+    error("** Error!!: use: git tag -d v"..pkgversion.." && git push --delete origin v"..pkgversion)
+  end
+end
+```
+
+<a name="heading--5-3"/>
+
+## 5.3 Recording git command output
+
+We record in a local variable the outputs of the `git` commands and then
+make our checks:
+
+```lua
+local gitbranch = os_capture('git symbolic-ref --short HEAD')
+local gitstatus = os_capture('git status --porcelain')
+local gitpush = os_capture('git log --branches --not --remotes')
+local tagongit = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
+```
+
+<a name="heading--5-4"/>
+
+## 5.4 Adding the "release" target to l3build CLI
+
+Finally we added "release" target to `l3build`:
+
+```lua
+if options["target"] == "release" then
+  if gitbranch == "master" then
+    print("** Checking git branch: "..gitbranch.." ... done!")
+  else
+    error("** Error!!: You must be on the 'master' branch")
+  end
+  if gitstatus == "" then
+    print("** Checking the status of the files ... done!")
+  else
+    error("** Error!!: Files have been edited, please commit all changes")
+  end
+  if gitpush == "" then
+    print("** Checking pending commits ... done!")
+  else
+    error("** Error!!: There are pending commits, please run git push")
+  end
+  check_marked_tags()
+  print("** The last tag marked for "..module.." in GitHub is: "..tagongit)
+  run_git("git tag -a v"..pkgversion.." -m 'Release v"..pkgversion.." "..pkgdate.."' && git push --tags")
+  if fileexists(ctanzip..".zip") then
+    print("** Checking the file "..ctanzip..".zip to send to CTAN ... done!")
+  else
+    print("** Creating the file "..ctanzip..".zip to send to CTAN")
+    os.execute("l3build ctan > "..os_null)
+  end
+  print("** Running: l3build upload -F ctan.ann --debug")
+  os.execute("l3build upload -F ctan.ann --debug >"..os_null)
+  print("** Check "..ctanzip..".curlopt file and add the changes to ctan.ann file")
+  print("** If everything is OK run (manually): l3build upload -F ctan.ann")
+  os.exit()
+end
+```
+
+It would look something like this:
+
+```
+** Checking git branch: master ... done!
+** Checking the status of the files ... done!
+** Checking pending commits ... done!
+** The version and date marked in demopkg.dtx and build.lua are the same
+** The last tag marked for demopkg in GitHub is: v1.0
+** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' && git push --tags
+
+Enumerando objetos: 1, listo.
+Contando objetos: 100% (1/1), listo.
+Escribiendo objetos: 100% (1/1), 181 bytes | 181.00 KiB/s, listo.
+Total 1 (delta 0), reusado 0 (delta 0)
+To https://github.com/pablgonz/ltxgit.git
+ * [new tag]         v1.1 -> v1.1
+** Creating the file demopkg-1.1.zip to send to CTAN
+** Running: l3build upload -F ctan.ann --debug
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  829k  100  473k  100  356k   191k   144k  0:00:02  0:00:02 --:--:--  336k
+** Check demopkg-1.1.curlopt file and add the changes to ctan.ann file
+** If everything is OK run (manually): l3build upload -F ctan.ann
 ```
