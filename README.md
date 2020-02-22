@@ -65,6 +65,7 @@ For the purposes of this example we will use and adapted version the now _classi
   * [4.4 Using arara to compile documentation](#heading--4-4)
 
 **[5. Setting up Releases and GitHub](#heading--5)**
+
   * [5.1 Creating the os\_capture\(cmd, raw\) function](#heading--5-1)
   * [5.2 Creating the run\_git\(s\) function](#heading--5-2)
   * [5.3 Recording git command output](#heading--5-3)
