@@ -1070,11 +1070,8 @@ We create a _dedicated_ function to execute `git tag`:
 
 ```lua
 local function run_git(s)
-  print('** Running: '..s..'\n')
+  print("** Running: "..s)
   local git_tag = os.execute(s)
-  if git_tag > 0 then
-    error("** Error!!: use: git tag -d v"..pkgversion.." && git push --delete origin v"..pkgversion)
-  end
 end
 ```
 
@@ -1086,9 +1083,9 @@ We record in a local variable the outputs of the `git` commands and then
 make our checks:
 
 ```lua
-local gitbranch = os_capture('git symbolic-ref --short HEAD')
-local gitstatus = os_capture('git status --porcelain')
-local gitpush = os_capture('git log --branches --not --remotes')
+local gitbranch = os_capture("git symbolic-ref --short HEAD")
+local gitstatus = os_capture("git status --porcelain")
+local gitpush = os_capture("git log --branches --not --remotes")
 local tagongit = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
 ```
 
@@ -1101,25 +1098,30 @@ Finally we added "release" target to `l3build`:
 ```lua
 if options["target"] == "release" then
   if gitbranch == "master" then
-    print("** Checking git branch: "..gitbranch.." ... done!")
+    print("** Checking git branch: "..gitbranch.." ... done")
   else
     error("** Error!!: You must be on the 'master' branch")
   end
   if gitstatus == "" then
-    print("** Checking the status of the files ... done!")
+    print("** Checking the status of the files ... done")
   else
     error("** Error!!: Files have been edited, please commit all changes")
   end
   if gitpush == "" then
-    print("** Checking pending commits ... done!")
+    print("** Checking pending commits ... done")
   else
     error("** Error!!: There are pending commits, please run git push")
   end
   check_marked_tags()
-  print("** The last tag marked for "..module.." in GitHub is: "..tagongit)
-  run_git("git tag -a v"..pkgversion.." -m 'Release v"..pkgversion.." "..pkgdate.."' && git push --tags")
+  local pkgversion = "v"..pkgversion
+
+  if tagongit == "" or tagongit ~= pkgversion then
+    run_git("git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags")
+  else
+    error("** Error!!: tag "..tagongit.." already exists, run git tag -d "..pkgversion.." && git push --delete origin "..pkgversion)
+  end
   if fileexists(ctanzip..".zip") then
-    print("** Checking the file "..ctanzip..".zip to send to CTAN ... done!")
+    print("** Checking the file "..ctanzip..".zip to send to CTAN ... done")
   else
     print("** Creating the file "..ctanzip..".zip to send to CTAN")
     os.execute("l3build ctan > "..os_null)
@@ -1135,24 +1137,22 @@ end
 It would look something like this:
 
 ```
-** Checking git branch: master ... done!
-** Checking the status of the files ... done!
-** Checking pending commits ... done!
+** Checking git branch: master ... done
+** Checking the status of the files ... done
+** Checking pending commits ... done
 ** The version and date marked in demopkg.dtx and build.lua are the same
-** The last tag marked for demopkg in GitHub is: v1.0
 ** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' && git push --tags
-
 Enumerando objetos: 1, listo.
 Contando objetos: 100% (1/1), listo.
-Escribiendo objetos: 100% (1/1), 181 bytes | 181.00 KiB/s, listo.
+Escribiendo objetos: 100% (1/1), 180 bytes | 180.00 KiB/s, listo.
 Total 1 (delta 0), reusado 0 (delta 0)
-To https://github.com/pablgonz/ltxgit.git
+To https://github.com/yourname/demopkg-jw.git
  * [new tag]         v1.1 -> v1.1
-** Creating the file demopkg-1.1.zip to send to CTAN
+** Checking the file demopkg-1.1.zip to send to CTAN ... done
 ** Running: l3build upload -F ctan.ann --debug
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100  829k  100  473k  100  356k   191k   144k  0:00:02  0:00:02 --:--:--  336k
+100  829k  100  473k  100  356k   178k   134k  0:00:02  0:00:02 --:--:--  312k
 ** Check demopkg-1.1.curlopt file and add the changes to ctan.ann file
 ** If everything is OK run (manually): l3build upload -F ctan.ann
 ```
