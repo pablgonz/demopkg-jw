@@ -1109,7 +1109,7 @@ if options["target"] == "release" then
     error("** Error!!: Files have been edited, please commit all changes")
   end
   if gitpush == "" then
-    os_message("** Checking pending commits, OK")
+    os_message("** Checking pending commits: OK")
   else
     error("** Error!!: There are pending commits, please run git push")
   end
@@ -1145,7 +1145,7 @@ It would look something like this when run `l3build release`:
 ```
 ** Checking git branch 'master': OK ...................................... done
 ** Checking status of the files: OK ...................................... done
-** Checking pending commits, OK .......................................... done
+** Checking pending commits: OK .......................................... done
 ** Checking version and date: OK ......................................... done
 ** Checking last tag marked in GitHub v1.0: OK ........................... done
 ** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' ................. done
