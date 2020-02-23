@@ -137,11 +137,11 @@ local function check_marked_tags()
   f:close()
 
   local m_pkgd, m_pkgv = string.match(marked_tags, "%[(%d%d%d%d%/%d%d%/%d%d)%s+v(%S+)")
-  pkgdate = string.gsub(pkgdate, "-", "/")
+  local pkgdate = string.gsub(pkgdate, "-", "/")
   if pkgversion == m_pkgv and pkgdate == m_pkgd then
-    print("** The version and date marked in demopkg.dtx and build.lua are the same")
+    print("** Checking version and date ... done")
   else
-    print("** The version and date marked in demopkg.dtx and build.lua are different")
+    print("** Warning: Version or date marked in files are different")
     print("** Check build.lua and run l3build tag again")
   end
 end

@@ -67,9 +67,8 @@ For the purposes of this example we will use and adapted version the now _classi
 **[5. Setting up Releases and GitHub](#heading--5)**
 
   * [5.1 Creating the os\_capture\(cmd, raw\) function](#heading--5-1)
-  * [5.2 Creating the run\_git\(s\) function](#heading--5-2)
-  * [5.3 Recording git command output](#heading--5-3)
-  * [5.4 Adding the "release" target to l3build CLI](#heading--5-4)
+  * [5.2 Recording git command output](#heading--5-2)
+  * [5.3 Adding the "release" target to l3build CLI](#heading--5-3)
 
 ---
 
@@ -519,11 +518,11 @@ local function check_marked_tags()
   f:close()
 
   local m_pkgd, m_pkgv = string.match(marked_tags, "%[(%d%d%d%d%/%d%d%/%d%d)%s+v(%S+)")
-  pkgdate = string.gsub(pkgdate, "-", "/")
+  local pkgdate = string.gsub(pkgdate, "-", "/")
   if pkgversion == m_pkgv and pkgdate == m_pkgd then
-    print("** The version and date marked in demopkg.dtx and build.lua are the same")
+    print("** Checking version and date ... done")
   else
-    print("** The version and date marked in demopkg.dtx and build.lua are different")
+    print("** Warning: Version or date marked in files are different")
     print("** Check build.lua and run l3build tag again")
   end
 end
@@ -1042,6 +1041,10 @@ lines are adapted to be able to do a (almost) automatic **Release** by registeri
 \(Credits and thanks to Will Robertson for placing the [fontspec](https://github.com/wspr/fontspec)
 code from which I adapted this.)
 
+> **NOTE:** With the files `ctan.ann`, `ctan.note` and `mypersonaldata.lua`
+> it's good to mark them with  `git update-index --assume-unchanged file`.
+> Unlike adding them to `.gitignore`, they will not be removed by using `git clean -xdfq`.
+
 <a name="heading--5-1"/>
 
 ## 5.1 Creating the os\_capture\(cmd, raw\) function
@@ -1064,20 +1067,7 @@ end
 
 <a name="heading--5-2"/>
 
-## 5.2 Creating the run\_git\(s\) function
-
-We create a _dedicated_ function to execute `git tag`:
-
-```lua
-local function run_git(s)
-  print("** Running: "..s)
-  local git_tag = os.execute(s)
-end
-```
-
-<a name="heading--5-3"/>
-
-## 5.3 Recording git command output
+## 5.2 Recording git command output
 
 We record in a local variable the outputs of the `git` commands and then
 make our checks:
@@ -1085,13 +1075,13 @@ make our checks:
 ```lua
 local gitbranch = os_capture("git symbolic-ref --short HEAD")
 local gitstatus = os_capture("git status --porcelain")
-local gitpush = os_capture("git log --branches --not --remotes")
 local tagongit = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
+local gitpush = os_capture("git log --branches --not --remotes")
 ```
 
-<a name="heading--5-4"/>
+<a name="heading--5-3"/>
 
-## 5.4 Adding the "release" target to l3build CLI
+## 5.3 Adding the "release" target to l3build CLI
 
 Finally we added "release" target to `l3build`:
 
@@ -1113,22 +1103,25 @@ if options["target"] == "release" then
     error("** Error!!: There are pending commits, please run git push")
   end
   check_marked_tags()
-  local pkgversion = "v"..pkgversion
 
-  if tagongit == "" or tagongit ~= pkgversion then
-    run_git("git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags")
-  else
+  local pkgversion = "v"..pkgversion
+  print("** Checking last tag marked for "..module.." in GitHub "..tagongit.." ... done")
+  errorlevel = os.execute("git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags -q")
+  if errorlevel ~= 0 then
     error("** Error!!: tag "..tagongit.." already exists, run git tag -d "..pkgversion.." && git push --delete origin "..pkgversion)
+    return errorlevel
+  else
+    print("** Running: git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags -q")
   end
   if fileexists(ctanzip..".zip") then
-    print("** Checking the file "..ctanzip..".zip to send to CTAN ... done")
+    print("** Checking "..ctanzip..".zip file to send to CTAN ... done")
   else
     print("** Creating the file "..ctanzip..".zip to send to CTAN")
     os.execute("l3build ctan > "..os_null)
   end
   print("** Running: l3build upload -F ctan.ann --debug")
   os.execute("l3build upload -F ctan.ann --debug >"..os_null)
-  print("** Check "..ctanzip..".curlopt file and add the changes to ctan.ann file")
+  print("** Now check "..ctanzip..".curlopt file and add changes to ctan.ann")
   print("** If everything is OK run (manually): l3build upload -F ctan.ann")
   os.exit()
 end
@@ -1140,19 +1133,14 @@ It would look something like this:
 ** Checking git branch: master ... done
 ** Checking the status of the files ... done
 ** Checking pending commits ... done
-** The version and date marked in demopkg.dtx and build.lua are the same
-** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' && git push --tags
-Enumerando objetos: 1, listo.
-Contando objetos: 100% (1/1), listo.
-Escribiendo objetos: 100% (1/1), 180 bytes | 180.00 KiB/s, listo.
-Total 1 (delta 0), reusado 0 (delta 0)
-To https://github.com/yourname/demopkg-jw.git
- * [new tag]         v1.1 -> v1.1
-** Checking the file demopkg-1.1.zip to send to CTAN ... done
+** Checking version and date ... done
+** Checking last tag marked for demopkg in GitHub v1.0 ... done
+** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' && git push --tags -q
+** Checking demopkg-1.1.zip file to send to CTAN ... done
 ** Running: l3build upload -F ctan.ann --debug
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100  829k  100  473k  100  356k   178k   134k  0:00:02  0:00:02 --:--:--  312k
-** Check demopkg-1.1.curlopt file and add the changes to ctan.ann file
+100  829k  100  473k  100  356k   253k   190k  0:00:01  0:00:01 --:--:--  443k
+** Now check demopkg-1.1.curlopt file and add the changes to ctan.ann
 ** If everything is OK run (manually): l3build upload -F ctan.ann
 ```
