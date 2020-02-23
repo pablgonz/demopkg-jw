@@ -130,6 +130,13 @@ cleanfiles = {
   "demopkg.pdf",
 }
 
+-- Line length in 80 characters
+local function os_message(text)
+  local mymax = 77-string.len(text)-string.len("done")
+  local msg = text.." "..string.rep(".",mymax).." done"
+  return print(msg)
+end
+
 -- Create check_marked_tags() function
 local function check_marked_tags()
   local f = assert(io.open("sources/demopkg.dtx", "r"))
@@ -139,7 +146,7 @@ local function check_marked_tags()
   local m_pkgd, m_pkgv = string.match(marked_tags, "%[(%d%d%d%d%/%d%d%/%d%d)%s+v(%S+)")
   local pkgdate = string.gsub(pkgdate, "-", "/")
   if pkgversion == m_pkgv and pkgdate == m_pkgd then
-    print("** Checking version and date ... done")
+    os_message("** Checking version and date: OK")
   else
     print("** Warning: Version or date marked in files are different")
     print("** Check build.lua and run l3build tag again")
@@ -166,7 +173,7 @@ local function make_temp_dir()
     error("** Error!!: The ./"..tempdir.." directory could not be created")
     return errorlevel
   else
-    print("** The ./"..tempdir.." directory has been successfully created")
+    os_message("** Creating the temporary directory ./"..tempdir..": OK")
   end
 end
 
@@ -178,7 +185,7 @@ if options["target"] == "testpkg" then
     error("** Error!!: Can't copy files from "..sourcefiledir.." to /"..tempdir)
     return errorlevel
   else
-    print("** Copying files from "..sourcefiledir.." to /"..tempdir)
+    os_message("** Copying files from "..sourcefiledir.." to ./"..tempdir..": OK")
   end
   -- Unpack files
   local file = jobname(tempdir.."/demopkg.dtx")
@@ -187,7 +194,7 @@ if options["target"] == "testpkg" then
     error("** Error!!: pdftex -interaction=batchmode "..file..".dtx")
     return errorlevel
   else
-    print("** Running: pdftex -interaction=batchmode "..file..".dtx")
+    os_message("** Running: pdftex -interaction=batchmode "..file..".dtx")
   end
   -- pdflatex
   local file = jobname(tempdir.."/example.tex")
@@ -196,16 +203,15 @@ if options["target"] == "testpkg" then
     error("** Error!!: pdflatex -interaction=nonstopmode "..file..".tex")
     return errorlevel
   else
-    print("** Running: pdflatex -interaction=nonstopmode "..file..".tex")
+    os_message("** Running: pdflatex -interaction=nonstopmode "..file..".tex")
   end
   -- Copying
-  print("** Copying "..file..".log and "..file..".pdf files to "..maindir)
+  os_message("** Copying "..file..".log and "..file..".pdf files to main dir: OK")
   cp("example.log", tempdir, maindir)
   cp("example.pdf", tempdir, maindir)
   -- Clean
-  print("** Remove the temporary directory ./"..tempdir)
+  os_message("** Remove temporary directory ./"..tempdir..": OK")
   cleandir(tempdir)
   lfs.rmdir(tempdir)
-  print("** The test has been successfully completed")
   os.exit()
 end

@@ -508,6 +508,18 @@ function, set `tag_hook(tagname)` and add the `tagged` target.
 
 ### 3.1.1 Creating the check\_marked\_tags\(\) function
 
+First we will create a function to limit the line length of our menssages
+to 80 characters
+
+```lua
+-- Line length in 80 characters
+local function os_message(text)
+  local mymax = 77-string.len(text)-string.len("done")
+  local msg = text.." "..string.rep(".",mymax).." done"
+  return print(msg)
+end
+```
+
 We added the function `check_marked_tags()` which will review and compare
 the version and dates marked in `demopkg.dtx` and `build.lua`.
 
@@ -520,7 +532,7 @@ local function check_marked_tags()
   local m_pkgd, m_pkgv = string.match(marked_tags, "%[(%d%d%d%d%/%d%d%/%d%d)%s+v(%S+)")
   local pkgdate = string.gsub(pkgdate, "-", "/")
   if pkgversion == m_pkgv and pkgdate == m_pkgd then
-    print("** Checking version and date ... done")
+    os_message("** Checking version and date: OK")
   else
     print("** Warning: Version or date marked in files are different")
     print("** Check build.lua and run l3build tag again")
@@ -581,7 +593,7 @@ local function make_temp_dir()
     error("** Error!!: The ./"..tempdir.." directory could not be created")
     return errorlevel
   else
-    print("** The ./"..tempdir.." directory has been successfully created")
+    os_message("** Creating the temporary directory ./"..tempdir..": OK")
   end
 end
 ```
@@ -602,7 +614,7 @@ if options["target"] == "testpkg" then
     error("** Error!!: Can't copy files from "..sourcefiledir.." to /"..tempdir)
     return errorlevel
   else
-    print("** Copying files from "..sourcefiledir.." to /"..tempdir)
+    os_message("** Copying files from "..sourcefiledir.." to ./"..tempdir..": OK")
   end
   -- Unpack files
   local file = jobname(tempdir.."/demopkg.dtx")
@@ -611,7 +623,7 @@ if options["target"] == "testpkg" then
     error("** Error!!: pdftex -interaction=batchmode "..file..".dtx")
     return errorlevel
   else
-    print("** Running: pdftex -interaction=batchmode "..file..".dtx")
+    os_message("** Running: pdftex -interaction=batchmode "..file..".dtx")
   end
   -- pdflatex
   local file = jobname(tempdir.."/example.tex")
@@ -620,17 +632,16 @@ if options["target"] == "testpkg" then
     error("** Error!!: pdflatex -interaction=nonstopmode "..file..".tex")
     return errorlevel
   else
-    print("** Running: pdflatex -interaction=nonstopmode "..file..".tex")
+    os_message("** Running: pdflatex -interaction=nonstopmode "..file..".tex")
   end
   -- Copying
-  print("** Copying "..file..".log and "..file..".pdf files to "..maindir)
+  os_message("** Copying "..file..".log and "..file..".pdf files to main dir: OK")
   cp("example.log", tempdir, maindir)
   cp("example.pdf", tempdir, maindir)
   -- Clean
-  print("** Remove the temporary directory ./"..tempdir)
+  os_message("** Remove temporary directory ./"..tempdir..": OK")
   cleandir(tempdir)
   lfs.rmdir(tempdir)
-  print("** The test has been successfully completed")
   os.exit()
 end
 ```
@@ -1075,8 +1086,8 @@ make our checks:
 ```lua
 local gitbranch = os_capture("git symbolic-ref --short HEAD")
 local gitstatus = os_capture("git status --porcelain")
-local tagongit = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
-local gitpush = os_capture("git log --branches --not --remotes")
+local tagongit  = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
+local gitpush   = os_capture("git log --branches --not --remotes")
 ```
 
 <a name="heading--5-3"/>
@@ -1088,24 +1099,24 @@ Finally we added "release" target to `l3build`:
 ```lua
 if options["target"] == "release" then
   if gitbranch == "master" then
-    print("** Checking git branch: "..gitbranch.." ... done")
+    os_message("** Checking git branch '"..gitbranch.."': OK")
   else
     error("** Error!!: You must be on the 'master' branch")
   end
   if gitstatus == "" then
-    print("** Checking the status of the files ... done")
+    os_message("** Checking status of the files: OK")
   else
     error("** Error!!: Files have been edited, please commit all changes")
   end
   if gitpush == "" then
-    print("** Checking pending commits ... done")
+    os_message("** Checking pending commits, OK")
   else
     error("** Error!!: There are pending commits, please run git push")
   end
   check_marked_tags()
 
   local pkgversion = "v"..pkgversion
-  print("** Checking last tag marked for "..module.." in GitHub "..tagongit.." ... done")
+  os_message("** Checking last tag marked in GitHub "..tagongit..": OK")
   errorlevel = os.execute("git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags -q")
   if errorlevel ~= 0 then
     error("** Error!!: tag "..tagongit.." already exists, run git tag -d "..pkgversion.." && git push --delete origin "..pkgversion)
@@ -1114,12 +1125,12 @@ if options["target"] == "release" then
     print("** Running: git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags -q")
   end
   if fileexists(ctanzip..".zip") then
-    print("** Checking "..ctanzip..".zip file to send to CTAN ... done")
+    os_message("** Checking "..ctanzip..".zip file to send to CTAN: OK")
   else
-    print("** Creating the file "..ctanzip..".zip to send to CTAN")
+    os_message("** Creating the file "..ctanzip..".zip to send to CTAN")
     os.execute("l3build ctan > "..os_null)
   end
-  print("** Running: l3build upload -F ctan.ann --debug")
+  os_message("** Running: l3build upload -F ctan.ann --debug")
   os.execute("l3build upload -F ctan.ann --debug >"..os_null)
   print("** Now check "..ctanzip..".curlopt file and add changes to ctan.ann")
   print("** If everything is OK run (manually): l3build upload -F ctan.ann")
@@ -1130,17 +1141,17 @@ end
 It would look something like this:
 
 ```
-** Checking git branch: master ... done
-** Checking the status of the files ... done
-** Checking pending commits ... done
-** Checking version and date ... done
-** Checking last tag marked for demopkg in GitHub v1.0 ... done
+** Checking git branch 'master': OK ...................................... done
+** Checking status of the files: OK ...................................... done
+** Checking pending commits, OK .......................................... done
+** Checking version and date: OK ......................................... done
+** Checking last tag marked in GitHub v1.0: OK ........................... done
 ** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' && git push --tags -q
-** Checking demopkg-1.1.zip file to send to CTAN ... done
-** Running: l3build upload -F ctan.ann --debug
+** Checking demopkg-1.1.zip file to send to CTAN: OK ..................... done
+** Running: l3build upload -F ctan.ann --debug ........................... done
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100  829k  100  473k  100  356k   253k   190k  0:00:01  0:00:01 --:--:--  443k
-** Now check demopkg-1.1.curlopt file and add the changes to ctan.ann
+100  829k  100  473k  100  356k   136k   102k  0:00:03  0:00:03 --:--:--  239k
+** Now check demopkg-1.1.curlopt file and add changes to ctan.ann
 ** If everything is OK run (manually): l3build upload -F ctan.ann
 ```
