@@ -1117,13 +1117,15 @@ if options["target"] == "release" then
 
   local pkgversion = "v"..pkgversion
   os_message("** Checking last tag marked in GitHub "..tagongit..": OK")
-  errorlevel = os.execute("git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags -q")
+  errorlevel = os.execute("git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."'")
   if errorlevel ~= 0 then
     error("** Error!!: tag "..tagongit.." already exists, run git tag -d "..pkgversion.." && git push --delete origin "..pkgversion)
     return errorlevel
   else
-    print("** Running: git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."' && git push --tags -q")
+    os_message("** Running: git tag -a "..pkgversion.." -m 'Release "..pkgversion.." "..pkgdate.."'")
   end
+  os_message("** Running: git push --tags --quiet")
+  os.execute("git push --tags --quiet")
   if fileexists(ctanzip..".zip") then
     os_message("** Checking "..ctanzip..".zip file to send to CTAN: OK")
   else
@@ -1138,7 +1140,7 @@ if options["target"] == "release" then
 end
 ```
 
-It would look something like this:
+It would look something like this when run `l3build release`:
 
 ```
 ** Checking git branch 'master': OK ...................................... done
@@ -1146,12 +1148,13 @@ It would look something like this:
 ** Checking pending commits, OK .......................................... done
 ** Checking version and date: OK ......................................... done
 ** Checking last tag marked in GitHub v1.0: OK ........................... done
-** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' && git push --tags -q
+** Running: git tag -a v1.1 -m 'Release v1.1 2020-02-19' ................. done
+** Running: git push --tags --quiet ...................................... done
 ** Checking demopkg-1.1.zip file to send to CTAN: OK ..................... done
 ** Running: l3build upload -F ctan.ann --debug ........................... done
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100  829k  100  473k  100  356k   136k   102k  0:00:03  0:00:03 --:--:--  239k
+100  829k  100  473k  100  356k   157k   118k  0:00:03  0:00:03 --:--:--  275k
 ** Now check demopkg-1.1.curlopt file and add changes to ctan.ann
 ** If everything is OK run (manually): l3build upload -F ctan.ann
 ```
