@@ -25,6 +25,8 @@ For the purposes of this example we will use and adapted version the now _classi
 ---
 # **Contents**
 
+**[Part I: Basic Configuration](#heading--1)**
+
 **[1. Create the directory structure for our project](#heading--1)**
 
   * [1.1 Development structure](#heading--1-1)
@@ -44,9 +46,11 @@ For the purposes of this example we will use and adapted version the now _classi
     * [2.6.2 Config CTAN upload](#heading--2-6-2)
   * [2.7 Clean files](#heading--2-7)
 
+**[Part II: Advanced Configuration](#heading--3)**
+
 **[3. Adding extra features to l3build](#heading--3)**
 
-  * [3.1 Tagged version and date check](#heading--3-1)
+  * [3.1 Checking version and date](#heading--3-1)
     * [3.1.1 Creating the check\_marked\_tags\(\) function](#heading--3-1-1)
     * [3.1.2 Configuring the tag\_hook\(tagname\) function](#heading--3-1-2)
     * [3.1.3 Adding the "tagged" target to l3build CLI](#heading--3-1-3)
@@ -387,7 +391,7 @@ packtdszip = false
 
 <a name="heading--2-6-1"/>
 
-### 2.6.1 Load personal data for ctan upload
+### 2.6.1 Load personal data for CTAN upload
 
 Some of the variables can be handled from an external file, for example
 `mypersonaldata.lua` will have the following information:
@@ -498,27 +502,26 @@ that fits the needs.
 
 <a name="heading--3-1"/>
 
-## 3.1 Tagged version and date check
+## 3.1 Checking version and date
 
 To check that the **version** and **dates** marked in our project files are the
 same as those declared in `build.lua` we'll create the `check_marked_tags()`
 function, set `tag_hook(tagname)` and add the `tagged` target.
 
-<a name="heading--3-1-1"/>
-
-### 3.1.1 Creating the check\_marked\_tags\(\) function
-
-First we will create a function to limit the line length of our menssages
-to 80 characters
+First we will create a small function to display our messages in the terminal
+set to 80 characters:
 
 ```lua
--- Line length in 80 characters
 local function os_message(text)
   local mymax = 77-string.len(text)-string.len("done")
   local msg = text.." "..string.rep(".",mymax).." done"
   return print(msg)
 end
 ```
+
+<a name="heading--3-1-1"/>
+
+### 3.1.1 Creating the check\_marked\_tags\(\) function
 
 We added the function `check_marked_tags()` which will review and compare
 the version and dates marked in `demopkg.dtx` and `build.lua`.
