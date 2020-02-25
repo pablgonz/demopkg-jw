@@ -1053,10 +1053,15 @@ the versatility of `l3build` allows us to automate some tasks. The following
 lines are adapted to be able to do a (almost) automatic **Release** by registering it in GitHub.
 
 \(Credits and thanks to Will Robertson for placing the [fontspec](https://github.com/wspr/fontspec)
-code from which I adapted this.)
+some code from which I adapted this)
 
 > **NOTE:** With the files `ctan.ann`, `ctan.note` and `mypersonaldata.lua`
-> it's good to mark them with  `git update-index --assume-unchanged file`.
+> it's good to mark them with:
+>
+>     git update-index --assume-unchanged ctan.ann
+>     git update-index --assume-unchanged ctan.note
+>     git update-index --assume-unchanged mypersonaldata.lua
+>
 > Unlike adding them to `.gitignore`, they will not be removed by using `git clean -xdfq`.
 
 <a name="heading--5-1"/>
