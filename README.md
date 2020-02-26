@@ -513,7 +513,7 @@ set to 80 characters:
 
 ```lua
 local function os_message(text)
-  local mymax = 77-string.len(text)-string.len("done")
+  local mymax = 77 - string.len(text) - string.len("done")
   local msg = text.." "..string.rep(".",mymax).." done"
   return print(msg)
 end
