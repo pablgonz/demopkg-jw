@@ -148,8 +148,9 @@ local function check_marked_tags()
   if pkgversion == m_pkgv and pkgdate == m_pkgd then
     os_message("** Checking version and date: OK")
   else
-    print("** Warning: Version or date marked in files are different")
-    print("** Check build.lua and run l3build tag again")
+    print("** Warning: demopkg.dtx is marked with version "..m_pkgv.." and date "..m_pkgd)
+    print("** Warning: build.lua is marked with version "..pkgversion.." and date "..pkgdate)
+    print("** Check version and date in build.lua then run l3build tag")
   end
 end
 
