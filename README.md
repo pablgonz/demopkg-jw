@@ -1137,14 +1137,14 @@ if options["target"] == "release" then
   if fileexists(ctanzip..".zip") then
     os_message("** Checking "..ctanzip..".zip file to send to CTAN: OK")
   else
-    os_message("** Creating the file "..ctanzip..".zip to send to CTAN")
+    os_message("** Creating "..ctanzip..".zip file to send to CTAN")
     os.execute("l3build ctan > "..os_null)
   end
   os_message("** Running: l3build upload -F ctan.ann --debug")
   os.execute("l3build upload -F ctan.ann --debug >"..os_null)
   print("** Now check "..ctanzip..".curlopt file and add changes to ctan.ann")
   print("** If everything is OK run (manually): l3build upload -F ctan.ann")
-  os.exit()
+  os.exit(0)
 end
 ```
 

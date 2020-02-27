@@ -132,8 +132,8 @@ cleanfiles = {
 
 -- Line length in 80 characters
 local function os_message(text)
-  local mymax = 77-string.len(text)-string.len("done")
-  local msg = text.." "..string.rep(".",mymax).." done"
+  local mymax = 77 - string.len(text) - string.len("done")
+  local msg = text.." "..string.rep(".", mymax).." done"
   return print(msg)
 end
 
