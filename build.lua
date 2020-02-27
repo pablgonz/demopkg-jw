@@ -61,7 +61,7 @@ function update_tag(file, content, tagname, tagdate)
     print("** "..file.." have been tagged with the version and date of build.lua")
   else
     local v_maj, v_min = string.match(tagname, "^v?(%d+)(%S*)$")
-    if not v_maj or not v_min then
+    if v_maj == "" or not v_min then
       print("Error!!: Invalid tag '"..tagname.."', none of the files have been tagged")
       os.exit(0)
     else
