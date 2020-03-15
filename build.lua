@@ -121,7 +121,7 @@ uploadconfig = {
   update      = true,
 }
 
--- Clean files
+--[[ Clean files
 cleanfiles = {
   ctanzip..".curlopt",
   ctanzip..".zip",
@@ -129,7 +129,7 @@ cleanfiles = {
   "example.pdf",
   "demopkg.pdf",
 }
-
+--]]
 -- Line length in 80 characters
 local function os_message(text)
   local mymax = 77 - string.len(text) - string.len("done")
