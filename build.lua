@@ -165,6 +165,11 @@ if options["target"] == "tagged" then
   os.exit()
 end
 
+-- Fix basename(path) in windows, see https://chat.stackexchange.com/transcript/message/55064157#55064157
+function basename(path)
+  return path:match("^.*[\\/]([^/\\]*)$")
+end
+
 -- Create make_temp_dir() function
 local function make_temp_dir()
   local tmpname = os.tmpname()
