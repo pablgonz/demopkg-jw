@@ -589,6 +589,11 @@ We add the function `make_temp_dir()` which will create a temporary (randomly
 named) directory in which we will run our _"old-fashioned test"_.
 
 ```lua
+-- Fix basename(path) in windows (see https://chat.stackexchange.com/transcript/message/55064157#55064157)
+function basename(path)
+  return path:match("^.*[\\/]([^/\\]*)$")
+end
+
 local function make_temp_dir()
   local tmpname = os.tmpname()
   tempdir = basename(tmpname)
