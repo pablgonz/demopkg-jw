@@ -146,7 +146,7 @@ local function check_marked_tags()
   local m_pkgd, m_pkgv = string.match(marked_tags, "%[(%d%d%d%d%/%d%d%/%d%d)%s+v(%S+)")
   local pkgdate = string.gsub(pkgdate, "-", "/")
   if pkgversion == m_pkgv and pkgdate == m_pkgd then
-    os_message("** Checking version and date: OK")
+    os_message("** Checking version and date in demopkg.dtx: OK")
   else
     print("** Warning: demopkg.dtx is marked with version "..m_pkgv.." and date "..m_pkgd)
     print("** Warning: build.lua is marked with version "..pkgversion.." and date "..pkgdate)
@@ -165,13 +165,12 @@ if options["target"] == "tagged" then
   os.exit()
 end
 
--- Fix basename(path) in windows, see https://chat.stackexchange.com/transcript/message/55064157#55064157
-function basename(path)
-  return path:match("^.*[\\/]([^/\\]*)$")
-end
-
 -- Create make_temp_dir() function
 local function make_temp_dir()
+  -- Fix basename(path) in windows (https://chat.stackexchange.com/transcript/message/55064157#55064157)
+  local function basename(path)
+    return path:match("^.*[\\/]([^/\\]*)$")
+  end
   local tmpname = os.tmpname()
   tempdir = basename(tmpname)
   errorlevel = mkdir(tempdir)
