@@ -71,8 +71,7 @@ For the purposes of this example we will use and adapted version the now _classi
 **[5. Setting up Releases and GitHub](#heading--5)**
 
   * [5.1 Creating the os\_capture\(cmd, raw\) function](#heading--5-1)
-  * [5.2 Recording git command output](#heading--5-2)
-  * [5.3 Adding the "release" target to l3build CLI](#heading--5-3)
+  * [5.2 Adding the "release" target to l3build CLI](#heading--5-2)
 
 ---
 
@@ -1092,26 +1091,19 @@ end
 
 <a name="heading--5-2"/>
 
-## 5.2 Recording git command output
+## 5.2 Adding the "release" target to l3build CLI
 
-We record in a local variable the outputs of the `git` commands and then
-make our checks:
-
-```lua
-local gitbranch = os_capture("git symbolic-ref --short HEAD")
-local gitstatus = os_capture("git status --porcelain")
-local tagongit  = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
-local gitpush   = os_capture("git log --branches --not --remotes")
-```
-
-<a name="heading--5-3"/>
-
-## 5.3 Adding the "release" target to l3build CLI
-
-Finally we added "release" target to `l3build`:
+Record in a local variable the outputs of the `git` commands finally we
+added "release" target to `l3build`:
 
 ```lua
 if options["target"] == "release" then
+  -- Capture output of git commands
+  local gitbranch = os_capture("git symbolic-ref --short HEAD")
+  local gitstatus = os_capture("git status --porcelain")
+  local tagongit  = os_capture('git for-each-ref refs/tags --sort=-taggerdate --format="%(refname:short)" --count=1')
+  local gitpush   = os_capture("git log --branches --not --remotes")
+
   if gitbranch == "master" then
     os_message("** Checking git branch '"..gitbranch.."': OK")
   else
